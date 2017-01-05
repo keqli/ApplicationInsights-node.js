@@ -96,11 +96,11 @@ class AutoCollectClientRequests {
             let requestParser = new ClientRequestParser(requestOptions, request);
             request.on('response', (response: http.ClientResponse) => {
                 requestParser.onResponse(response, properties);
-                client.track(requestParser.getDependencyData());
+                client.track(requestParser.getDependencyData(), null, { requestOptions: requestOptions, request: request, response: response });
             });
             request.on('error', (e: Error) => {
                 requestParser.onError(e, properties);
-                client.track(requestParser.getDependencyData());
+                client.track(requestParser.getDependencyData(), null, { requestOptions: requestOptions, request: request, error: e });
             });
         }
     }
