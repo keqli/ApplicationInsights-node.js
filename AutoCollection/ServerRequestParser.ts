@@ -8,6 +8,7 @@ import Util = require("../Library/Util");
 import RequestResponseHeaders = require("../Library/RequestResponseHeaders");
 import RequestParser = require("./RequestParser");
 import CorrelationIdManager = require("../Library/CorrelationIdManager");
+import OperationHeaderParser = require("./OperationHeaderParser");
 
 /**
  * Helper class to read data from the requst/response objects and convert them into the telemetry contract
@@ -171,29 +172,30 @@ class ServerRequestParser extends RequestParser {
 
     private parseHeaders(request:http.ServerRequest, requestId?: string) {
         this.rawHeaders = request.headers || (<any>request).rawHeaders;
-        this.userAgent = request.headers && request.headers["user-agent"];
-        this.sourceCorrelationId = Util.getCorrelationContextTarget(request, RequestResponseHeaders.requestContextSourceKey);
+        this.userAgent = this.rawHeaders && this.rawHeaders["user-agent"];
 
-        if (request.headers) {
-            this.correlationContextHeader = request.headers[RequestResponseHeaders.correlationContextHeader];
-
-            if (request.headers[RequestResponseHeaders.requestIdHeader]) {
-                this.parentId = request.headers[RequestResponseHeaders.requestIdHeader];
-                this.requestId = CorrelationIdManager.generateRequestId(this.parentId);
-                this.correlationContextHeader = request.headers[RequestResponseHeaders.correlationContextHeader];
+        if (this.rawHeaders) {
+            if (this.rawHeaders[RequestResponseHeaders.requestIdHeader]) {
+                var parsedHeaders = new OperationHeaderParser(this.rawHeaders)
+                this.sourceCorrelationId = parsedHeaders.sourceCorrelationId;
+                this.parentId = parsedHeaders.parentId;
+                this.requestId = parsedHeaders.requestId;
+                this.correlationContextHeader = parsedHeaders.correlationContextHeader;
+                this.operationId = parsedHeaders.operationId;
             } else {
                 // Legacy fallback
-                const rootId = request.headers[RequestResponseHeaders.rootIdHeader];
-                this.parentId = request.headers[RequestResponseHeaders.parentIdHeader];
+                this.sourceCorrelationId = Util.getCorrelationContextTarget(request, RequestResponseHeaders.requestContextSourceKey);
+                const rootId = this.rawHeaders[RequestResponseHeaders.rootIdHeader];
+                this.parentId = this.rawHeaders[RequestResponseHeaders.parentIdHeader];
                 this.requestId = CorrelationIdManager.generateRequestId(rootId || this.parentId);
                 this.correlationContextHeader = null;
+                this.operationId = CorrelationIdManager.getRootId(this.requestId); 
             }
             if (requestId) {
                 // For the scenarios that don't guarantee an AI-created context,
                 // override the requestId with the provided one.
                 this.requestId = requestId;
             }
-            this.operationId = CorrelationIdManager.getRootId(this.requestId); 
         }
     }
 

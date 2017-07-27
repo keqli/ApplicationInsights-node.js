@@ -11,6 +11,8 @@ import Channel = require("./Channel");
 import ServerRequestTracking = require("../AutoCollection/ServerRequests");
 import ClientRequestTracking = require("../AutoCollection/ClientRequests");
 import TelemetryProcessors = require("../TelemetryProcessors");
+import CorrelationIdManager = require("./CorrelationIdManager");
+import OperationHeaderParser = require("../AutoCollection/OperationHeaderParser");
 import { CorrelationContextManager } from "../AutoCollection/CorrelationContextManager";
 import Sender = require("./Sender");
 import Util = require("./Util");
@@ -172,6 +174,49 @@ class Client {
      */
     public trackRequest(request: http.ServerRequest, response: http.ServerResponse, properties?: { [key: string]: string; }) {
         ServerRequestTracking.trackRequest(this, request, response, properties);
+    }
+
+
+    public startOperation(name: string, serializedOperation: string = "",
+        callback: (endOperation:(success: boolean, properties?: { [key: string]: string; }, tagOverrides?: { [key: string]: string; }, contextObjects?: { [name: string]: any; })=>void) => void) {
+        var headers = {};
+        var timer = new Date().getTime();
+
+        try {
+            headers = JSON.parse(serializedOperation);
+        } catch (e) {}
+
+        var parsedHeaders = new OperationHeaderParser(headers);
+        var context = CorrelationContextManager.generateContextObject(
+            parsedHeaders.operationId,
+            parsedHeaders.parentId,
+            name,
+            parsedHeaders.correlationContextHeader);
+
+        var called = false;
+        var endOperation = (success: boolean, properties?: { [key: string]: string; }, tagOverrides?: { [key: string]: string; }, contextObjects?: { [name: string]: any; }) => {
+            if (called) {
+                return;
+            }
+            called = true;
+
+            var request = new Contracts.RequestData();
+            request.id = parsedHeaders.requestId;
+            request.name = name;
+            request.responseCode = success ? "200" : "500";
+            request.success = success;
+            request.duration = Util.msToTimeSpan(new Date().getTime() - timer);
+            request.source = parsedHeaders.sourceCorrelationId;
+            request.properties = properties;
+            request.url = "ai-operation://" + name;
+            
+            var data = new Contracts.Data<Contracts.RequestData>();
+            data.baseType = Contracts.DataTypes.REQUEST;
+            data.baseData = request;
+            this.track(data, tagOverrides, contextObjects);
+        };
+
+        CorrelationContextManager.runWithContext(context, ()=>callback(endOperation));
     }
 
     /**
