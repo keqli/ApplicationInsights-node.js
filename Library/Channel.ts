@@ -1,6 +1,7 @@
 ﻿import Contracts = require("../Declarations/Contracts/index");
 import Logging = require("./Logging");
 import Sender = require("./Sender");
+const Buffer = require("../buffer/").Buffer;
 
 class Channel {
     

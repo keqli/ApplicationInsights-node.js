@@ -8,6 +8,7 @@ import Util = require("./Util");
 import Logging = require("./Logging");
 import FlushOptions = require("./FlushOptions");
 import EnvelopeFactory = require("./EnvelopeFactory");
+const Buffer = require("../buffer/").Buffer;
 
 /**
  * Application Insights telemetry client provides interface to track telemetry items, register telemetry initializers and
