@@ -9,7 +9,6 @@ import child_process = require("child_process");
 
 import Logging = require("./Logging");
 import Config = require("./Config")
-import AutoCollectHttpDependencies = require("../AutoCollection/HttpDependencies");
 
 class Sender {
     private static TAG = "Sender";
@@ -109,9 +108,6 @@ class Sender {
             }
 
             Logging.info(Sender.TAG, options);
-
-            // Ensure this request is not captured by auto-collection.
-            (<any>options)[AutoCollectHttpDependencies.disableCollectionRequestOption] = true;
 
             var requestCallback = (res: http.ClientResponse) => {
                 res.setEncoding("utf-8");

@@ -1,9 +1,3 @@
-import CorrelationContextManager = require("./AutoCollection/CorrelationContextManager"); // Keep this first
-import AutoCollectConsole = require("./AutoCollection/Console");
-import AutoCollectExceptions = require("./AutoCollection/Exceptions");
-import AutoCollectPerformance = require("./AutoCollection/Performance");
-import AutoCollectHttpDependencies = require("./AutoCollection/HttpDependencies");
-import AutoCollectHttpRequests = require("./AutoCollection/HttpRequests");
 import Config = require("./Library/Config");
 import Context = require("./Library/Context");
 import Logging = require("./Library/Logging");
@@ -11,7 +5,7 @@ import Util = require("./Library/Util");
 
 // We export these imports so that SDK users may use these classes directly.
 // They're exposed using "export import" so that types are passed along as expected
-export import TelemetryClient = require("./Library/NodeClient");
+export import TelemetryClient = require("./Library/TelemetryClient");
 export import Contracts = require("./Declarations/Contracts");
 
 // Default autocollection configuration
@@ -26,12 +20,6 @@ let _isCorrelating = true;
 
 let _diskRetryInterval: number = undefined;
 let _diskRetryMaxBytes: number = undefined;
-
-let _console: AutoCollectConsole;
-let _exceptions: AutoCollectExceptions;
-let _performance: AutoCollectPerformance;
-let _serverRequests: AutoCollectHttpRequests;
-let _clientRequests: AutoCollectHttpDependencies;
 
 let _isStarted = false;
 
@@ -54,11 +42,6 @@ export let defaultClient: TelemetryClient;
 export function setup(instrumentationKey?: string) {
     if(!defaultClient) {
         defaultClient = new TelemetryClient(instrumentationKey);
-        _console = new AutoCollectConsole(defaultClient);
-        _exceptions = new AutoCollectExceptions(defaultClient);
-        _performance = new AutoCollectPerformance(defaultClient);
-        _serverRequests = new AutoCollectHttpRequests(defaultClient);
-        _clientRequests = new AutoCollectHttpDependencies(defaultClient);
     } else {
         Logging.info("The default client is already setup");
     }
@@ -79,48 +62,11 @@ export function setup(instrumentationKey?: string) {
 export function start() {
     if(!!defaultClient) {
         _isStarted = true;
-        _console.enable(_isConsole, _isConsoleLog);
-        _exceptions.enable(_isExceptions);
-        _performance.enable(_isPerformance);
-        _serverRequests.useAutoCorrelation(_isCorrelating);
-        _serverRequests.enable(_isRequests);
-        _clientRequests.enable(_isDependencies);
     } else {
         Logging.warn("Start cannot be called before setup");
     }
 
     return Configuration;
-}
-
-/**
- * Returns an object that is shared across all code handling a given request.
- * This can be used similarly to thread-local storage in other languages.
- * Properties set on this object will be available to telemetry processors.
- * 
- * Do not store sensitive information here.
- * Custom properties set on this object can be exposed in a future SDK
- * release via outgoing HTTP headers.
- * This is to allow for correlating data cross-component.
- * 
- * This method will return null if automatic dependency correlation is disabled.
- * @returns A plain object for request storage or null if automatic dependency correlation is disabled.
- */
-export function getCorrelationContext(): CorrelationContextManager.CorrelationContext {
-    if (_isCorrelating) {
-        return CorrelationContextManager.CorrelationContextManager.getCurrentContext();
-    }
-
-    return null;
-}
-
-/**
- * Returns a function that will get the same correlation context within its
- * function body as the code executing this function.
- * Use this method if automatic dependency correlation is not propagating
- * correctly to an asynchronous callback.
- */
-export function wrapWithCorrelationContext<T extends Function>(fn: T): T {
-    return CorrelationContextManager.CorrelationContextManager.wrapCallback(fn);
 }
 
 /**
@@ -140,7 +86,6 @@ export class Configuration {
         _isConsole = value;
         _isConsoleLog = collectConsoleLog;
         if (_isStarted){
-            _console.enable(value, collectConsoleLog);
         }
 
         return Configuration;
@@ -153,9 +98,6 @@ export class Configuration {
      */
     public static setAutoCollectExceptions(value: boolean) {
         _isExceptions = value;
-        if (_isStarted){
-            _exceptions.enable(value);
-        }
 
         return Configuration;
     }
@@ -167,9 +109,6 @@ export class Configuration {
      */
     public static setAutoCollectPerformance(value: boolean) {
         _isPerformance = value;
-        if (_isStarted){
-            _performance.enable(value);
-        }
 
         return Configuration;
     }
@@ -181,9 +120,6 @@ export class Configuration {
      */
     public static setAutoCollectRequests(value: boolean) {
         _isRequests = value;
-        if (_isStarted) {
-            _serverRequests.enable(value);
-        }
 
         return Configuration;
     }
@@ -195,9 +131,6 @@ export class Configuration {
      */
     public static setAutoCollectDependencies(value: boolean) {
         _isDependencies = value;
-        if (_isStarted) {
-            _clientRequests.enable(value);
-        }
 
         return Configuration;
     }
@@ -209,9 +142,6 @@ export class Configuration {
      */
     public static setAutoDependencyCorrelation(value: boolean) {
         _isCorrelating = value;
-        if (_isStarted) {
-            _serverRequests.useAutoCorrelation(value);
-        }
 
         return Configuration;
     }
@@ -256,19 +186,4 @@ export class Configuration {
 export function dispose() {
     defaultClient = null;
     _isStarted = false;
-    if (_console) {
-        _console.dispose();
-    }
-    if (_exceptions) {
-        _exceptions.dispose();
-    }
-    if (_performance) {
-        _performance.dispose();
-    }
-    if(_serverRequests) {
-        _serverRequests.dispose();
-    }
-    if(_clientRequests) {
-        _clientRequests.dispose();
-    }
 }

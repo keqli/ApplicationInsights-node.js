@@ -6,7 +6,6 @@ import Context = require("./Context");
 import Contracts = require("../Declarations/Contracts");
 import Channel = require("./Channel");
 import TelemetryProcessors = require("../TelemetryProcessors");
-import { CorrelationContextManager } from "../AutoCollection/CorrelationContextManager";
 import Sender = require("./Sender");
 import Util = require("./Util");
 import Logging = require("./Logging");
@@ -131,7 +130,7 @@ class TelemetryClient {
 
             // Ideally we would have a central place for "internal" telemetry processors and users can configure which ones are in use.
             // This will do for now. Otherwise clearTelemetryProcessors() would be problematic.
-            accepted = accepted && TelemetryProcessors.samplingTelemetryProcessor(envelope, { correlationContext: CorrelationContextManager.getCurrentContext() });
+            accepted = accepted && TelemetryProcessors.samplingTelemetryProcessor(envelope);
 
             if (accepted) {
                 this.channel.send(envelope);
@@ -168,7 +167,6 @@ class TelemetryClient {
         }
 
         contextObjects = contextObjects || {};
-        contextObjects['correlationContext'] = CorrelationContextManager.getCurrentContext();
 
         for (var i = 0; i < telemetryProcessorsCount; ++i) {
             try {

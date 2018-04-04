@@ -2,7 +2,6 @@ import Contracts = require("../Declarations/Contracts")
 import Util = require("./Util")
 import Config = require("./Config");
 import Context = require("./Context");
-import { CorrelationContextManager } from "../AutoCollection/CorrelationContextManager";
 
 /**
  * Manages the logic of creating envelopes from Telemetry objects
@@ -211,7 +210,6 @@ class EnvelopeFactory {
     }
 
     private static getTags(context: Context, tagOverrides?: { [key: string]: string; }) {
-        var correlationContext = CorrelationContextManager.getCurrentContext();
 
         // Make a copy of context tags so we don't alter the actual object
         // Also perform tag overriding
@@ -226,13 +224,6 @@ class EnvelopeFactory {
             for (var key in tagOverrides) {
                 newTags[key] = tagOverrides[key];
             }
-        }
-
-        // Fill in internally-populated values if not already set
-        if (correlationContext) {
-            newTags[context.keys.operationId] = newTags[context.keys.operationId] || correlationContext.operation.id;
-            newTags[context.keys.operationName] = newTags[context.keys.operationName] || correlationContext.operation.name;
-            newTags[context.keys.operationParentId] = newTags[context.keys.operationParentId] || correlationContext.operation.parentId;
         }
 
         return newTags;
