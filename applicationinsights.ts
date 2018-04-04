@@ -6,7 +6,7 @@ import Util = require("./Library/Util");
 // We export these imports so that SDK users may use these classes directly.
 // They're exposed using "export import" so that types are passed along as expected
 export import TelemetryClient = require("./Library/TelemetryClient");
-export import Contracts = require("./Declarations/Contracts");
+export import Contracts = require("./Declarations/Contracts/index");
 
 // Default autocollection configuration
 let _isConsole = true;

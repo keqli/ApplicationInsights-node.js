@@ -1,11 +1,8 @@
-import url = require("url");
-import os = require("os");
-
 import Config = require("./Config");
 import Context = require("./Context");
-import Contracts = require("../Declarations/Contracts");
+import Contracts = require("../Declarations/Contracts/index");
 import Channel = require("./Channel");
-import TelemetryProcessors = require("../TelemetryProcessors");
+import TelemetryProcessors = require("../TelemetryProcessors/index");
 import Sender = require("./Sender");
 import Util = require("./Util");
 import Logging = require("./Logging");
@@ -93,12 +90,6 @@ class TelemetryClient {
      * */
     public trackDependency(telemetry: Contracts.DependencyTelemetry) {
 
-        if (telemetry && !telemetry.target && telemetry.data) {
-            // url.parse().host returns null for non-urls,
-            // making this essentially a no-op in those cases
-            // If this logic is moved, update jsdoc in DependencyTelemetry.target
-            telemetry.target = url.parse(telemetry.data).host;
-        }
         this.track(telemetry, Contracts.TelemetryType.Dependency);
     }
 

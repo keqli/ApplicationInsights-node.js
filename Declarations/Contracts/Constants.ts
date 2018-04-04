@@ -1,4 +1,4 @@
-import { Domain, EventData, ExceptionData, MessageData, MetricData, PageViewData, RemoteDependencyData, RequestData } from "./Generated";
+import { Domain, EventData, ExceptionData, MessageData, MetricData, PageViewData, RemoteDependencyData, RequestData } from "./Generated/index";
 
 export class RemoteDependencyDataConstants {
     public static TYPE_HTTP:string = "Http";

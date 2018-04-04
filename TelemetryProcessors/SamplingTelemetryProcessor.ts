@@ -1,4 +1,4 @@
-import Contracts = require("../Declarations/Contracts");
+import Contracts = require("../Declarations/Contracts/index");
 
 /**
  *  A telemetry processor that handles sampling.

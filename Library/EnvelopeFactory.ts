@@ -1,4 +1,4 @@
-import Contracts = require("../Declarations/Contracts")
+import Contracts = require("../Declarations/Contracts/index")
 import Util = require("./Util")
 import Config = require("./Config");
 import Context = require("./Context");

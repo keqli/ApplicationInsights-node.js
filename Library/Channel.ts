@@ -1,4 +1,4 @@
-﻿import Contracts = require("../Declarations/Contracts");
+﻿import Contracts = require("../Declarations/Contracts/index");
 import Logging = require("./Logging");
 import Sender = require("./Sender");
 
