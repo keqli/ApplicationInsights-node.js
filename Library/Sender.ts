@@ -10,6 +10,8 @@
 import Logging = require("./Logging");
 import Config = require("./Config")
 
+declare const wx: any;
+
 class Sender {
     private static TAG = "Sender";
     // private static ICACLS_PATH = `${process.env.systemdrive}/windows/system32/icacls.exe`;
@@ -77,7 +79,37 @@ class Sender {
     }
 
     public send(payload: Buffer, callback?: (v: string) => void) {
-        // var endpointUrl = this._config.endpointUrl;
+        const endpointUrl = this._config.endpointUrl;
+        wx.request({
+            url: endpointUrl,
+            data: payload.toString(),
+            method: "POST",
+            dataType: "application/x-json-stream",
+            success: (res: any) => {
+                const responseString = res.data;
+                Logging.info(Sender.TAG, responseString);
+                if (typeof this._onSuccess === "function") {
+                    this._onSuccess(responseString);
+                }
+
+                if (typeof callback === "function") {
+                    callback(responseString);
+                }
+            },
+            fail: (error: any) => {
+                Logging.warn(Sender.TAG, error);
+                this._onErrorHelper(error);
+
+                if (typeof callback === "function") {
+                    var errorMessage = "error sending telemetry";
+                    if (error && (typeof error.toString === "function")) {
+                        errorMessage = error.toString();
+                    }
+
+                    callback(errorMessage);
+                }
+            }
+        });
         // if (endpointUrl && endpointUrl.indexOf("//") === 0) {
         //     // use https if the config did not specify a protocol
         //     endpointUrl = "https:" + endpointUrl;
@@ -432,11 +464,11 @@ class Sender {
     //     });
     // }
 
-    // private _onErrorHelper(error: Error): void {
-    //     if (typeof this._onError === "function") {
-    //         this._onError(error);
-    //     }
-    // }
+    private _onErrorHelper(error: Error): void {
+        if (typeof this._onError === "function") {
+            this._onError(error);
+        }
+    }
 }
 
 export = Sender;
