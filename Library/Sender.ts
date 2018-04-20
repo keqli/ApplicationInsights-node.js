@@ -17,8 +17,6 @@ class Sender {
         this._onError = onError;
     }
 
-    public setDiskRetryMode(value: boolean, resendInterval?: number, maxBytesOnDisk?: number) {}
-    
     public send(payload: string, callback?: (v: string) => void) {
         const endpointUrl = this._config.endpointUrl;
         wx.request({
@@ -52,8 +50,6 @@ class Sender {
             }
         });
     }
-
-    public saveOnCrash(payload: string) {}
 
     private _onErrorHelper(error: Error): void {
         if (typeof this._onError === "function") {
