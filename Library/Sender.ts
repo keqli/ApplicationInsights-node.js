@@ -78,11 +78,11 @@ class Sender {
         }
     }
 
-    public send(payload: Buffer, callback?: (v: string) => void) {
+    public send(payload: string, callback?: (v: string) => void) {
         const endpointUrl = this._config.endpointUrl;
         wx.request({
             url: endpointUrl,
-            data: payload.toString(),
+            data: payload,
             method: "POST",
             dataType: "application/x-json-stream",
             success: (res: any) => {

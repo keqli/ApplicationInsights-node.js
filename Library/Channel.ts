@@ -1,7 +1,6 @@
 ﻿import Contracts = require("../Declarations/Contracts/index");
 import Logging = require("./Logging");
 import Sender = require("./Sender");
-const Buffer = require("../buffer/").Buffer;
 
 class Channel {
     
@@ -93,7 +92,7 @@ class Channel {
                     callback("data saved on crash");
                 }
             } else {
-                this._sender.send(new Buffer(batch), callback);
+                this._sender.send(batch, callback);
             }
         }
 
