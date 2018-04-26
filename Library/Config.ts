@@ -26,6 +26,8 @@ class Config {
     public correlationIdRetryIntervalMs: number;
     /** A list of domains to exclude from cross-component header injection */
     public correlationHeaderExcludedDomains: string[];
+    /** A function to send http request */
+    public sendRequest: Function;
 
     private endpointBase: string = "https://dc.services.visualstudio.com";
     private setCorrelationId: (v: string) => void;
@@ -47,6 +49,7 @@ class Config {
             "*.core.usgovcloudapi.net"];
         
         this.setCorrelationId = (correlationId) => this.correlationId = correlationId;
+        this.sendRequest = () => {};
     }
 
     public get profileQueryEndpoint() {

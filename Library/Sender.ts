@@ -1,8 +1,6 @@
 ﻿import Logging = require("./Logging");
 import Config = require("./Config")
 
-declare const wx: any;
-
 class Sender {
     private static TAG = "Sender";
 
@@ -20,7 +18,7 @@ class Sender {
     public send(buffer: string[], callback?: (v: string) => void) {
         const endpointUrl = this._config.endpointUrl;
         const payload = buffer.join("\n");
-        wx.request({
+        this._config.sendRequest({
             url: endpointUrl,
             data: payload,
             method: "POST",
