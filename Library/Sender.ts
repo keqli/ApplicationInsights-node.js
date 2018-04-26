@@ -17,8 +17,9 @@ class Sender {
         this._onError = onError;
     }
 
-    public send(payload: string, callback?: (v: string) => void) {
+    public send(buffer: string[], callback?: (v: string) => void) {
         const endpointUrl = this._config.endpointUrl;
+        const payload = buffer.join("\n");
         wx.request({
             url: endpointUrl,
             data: payload,

@@ -70,16 +70,13 @@ class Channel {
     public triggerSend(isNodeCrashing: boolean, callback?: (v: string) => void) {
         let bufferIsEmpty = this._buffer.length < 1;
         if (!bufferIsEmpty) {
-            // compose an array of payloads
-            var batch = this._buffer.join("\n");
-
             // invoke send
             if (isNodeCrashing) {
                 if (typeof callback === "function") {
                     callback("data saved on crash");
                 }
             } else {
-                this._sender.send(batch, callback);
+                this._sender.send(this._buffer, callback);
             }
         }
 
