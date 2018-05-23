@@ -1,13 +1,10 @@
-﻿import http = require("http");
-import url = require("url");
-
-import Logging = require("./Logging");
+﻿import Logging = require("./Logging");
 import TelemetryClient = require("../Library/TelemetryClient");
 import RequestResponseHeaders = require("./RequestResponseHeaders");
 
 class Util {
     public static MAX_PROPERTY_LENGTH = 1024;
-    private static document:any = typeof document !== "undefined" ? document : {};
+    private static document:any = typeof Util.document !== "undefined" ? Util.document : {};
 
     /**
      * helper method to access userId and sessionId cookie
@@ -39,20 +36,6 @@ class Util {
         } else {
             return "";
         }
-    }
-
-    /**
-     * Convert an array of int32 to Base64 (no '==' at the end).
-     * MSB first.
-     */
-    public static int32ArrayToBase64(array: number[]) {
-        let toChar = (v: number, i: number) =>
-            String.fromCharCode((v >> i) & 0xFF);
-        let int32AsString = (v: number) =>
-            toChar(v, 24) + toChar(v, 16) + toChar(v, 8) + toChar(v, 0);
-        let x = array.map(int32AsString).join("");
-        let s = new Buffer(x, "binary").toString("base64");
-        return s.substr(0, s.indexOf("="));
     }
 
     /**
@@ -163,39 +146,6 @@ class Util {
         }
 
         return map;
-    }
-
-    /**
-     * Checks if a request url is not on a excluded domain list 
-     * and if it is safe to add correlation headers
-     */
-    public static canIncludeCorrelationHeader(client: TelemetryClient, requestUrl: string) {
-        let excludedDomains = client && client.config && client.config.correlationHeaderExcludedDomains;
-        if (!excludedDomains || excludedDomains.length == 0 || !requestUrl) {
-            return true;
-        }
-
-        for (let i = 0; i < excludedDomains.length; i++) {
-            let regex = new RegExp(excludedDomains[i].replace(/\./g,"\.").replace(/\*/g,".*"));
-            if (regex.test(url.parse(requestUrl).hostname)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public static getCorrelationContextTarget(response: http.ClientResponse | http.ServerRequest, key: string) {
-        const contextHeaders = response.headers && response.headers[RequestResponseHeaders.requestContextHeader];
-        if (contextHeaders) {
-            const keyValues = contextHeaders.split(",");
-            for(let i = 0; i < keyValues.length; ++i) {
-                const keyValue = keyValues[i].split("=");
-                if (keyValue.length == 2 && keyValue[0] == key) {
-                    return keyValue[1];
-                }
-            }
-        }
     }
 }
 export = Util;

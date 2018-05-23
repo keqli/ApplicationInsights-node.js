@@ -1,8 +1,7 @@
-import Contracts = require("../Declarations/Contracts")
+import Contracts = require("../Declarations/Contracts/index")
 import Util = require("./Util")
 import Config = require("./Config");
 import Context = require("./Context");
-import { CorrelationContextManager } from "../AutoCollection/CorrelationContextManager";
 
 /**
  * Manages the logic of creating envelopes from Telemetry objects
@@ -70,24 +69,22 @@ class EnvelopeFactory {
 
         var iKey = config ? config.instrumentationKey || "" : "";
         var envelope = new Contracts.Envelope();
-        envelope.data = data;
+        envelope.time = (new Date()).toISOString();
+        envelope.ver = 1;
+
+        // Exclude metrics from sampling by default
+        envelope.sampleRate = (config && telemetryType !== Contracts.TelemetryType.Metric) ? config.samplingPercentage : 100;
         envelope.iKey = iKey;
 
         // this is kind of a hack, but the envelope name is always the same as the data name sans the chars "data"
         envelope.name =
             "Microsoft.ApplicationInsights." +
-            iKey.replace(/-/g, "") +
+            iKey.replace(/-/g, "").toLowerCase() +
             "." +
             data.baseType.substr(0, data.baseType.length - 4);
-        envelope.tags = this.getTags(context, telemetry.tagOverrides);
-        envelope.time = (new Date()).toISOString();
-        envelope.ver = 1;
-        envelope.sampleRate = config ? config.samplingPercentage : 100;
 
-        // Exclude metrics from sampling by default
-        if (telemetryType === Contracts.TelemetryType.Metric) {
-            envelope.sampleRate = 100;
-        }
+        envelope.tags = this.getTags(context, telemetry.tagOverrides);
+        envelope.data = data;
 
         return envelope;
     }
@@ -211,7 +208,6 @@ class EnvelopeFactory {
     }
 
     private static getTags(context: Context, tagOverrides?: { [key: string]: string; }) {
-        var correlationContext = CorrelationContextManager.getCurrentContext();
 
         // Make a copy of context tags so we don't alter the actual object
         // Also perform tag overriding
@@ -226,13 +222,6 @@ class EnvelopeFactory {
             for (var key in tagOverrides) {
                 newTags[key] = tagOverrides[key];
             }
-        }
-
-        // Fill in internally-populated values if not already set
-        if (correlationContext) {
-            newTags[context.keys.operationId] = newTags[context.keys.operationId] || correlationContext.operation.id;
-            newTags[context.keys.operationName] = newTags[context.keys.operationName] || correlationContext.operation.name;
-            newTags[context.keys.operationParentId] = newTags[context.keys.operationParentId] || correlationContext.operation.parentId;
         }
 
         return newTags;

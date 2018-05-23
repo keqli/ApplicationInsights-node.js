@@ -6,7 +6,4 @@ export * from "./RequestTelemetry";
 export * from "./TraceTelemetry";
 export * from "./Telemetry";
 
-export * from "./NodeHttpDependencyTelemetry";
-export * from "./NodeHttpRequestTelemetry";
-
 export * from "./TelemetryType";

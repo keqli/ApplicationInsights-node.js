@@ -1,5 +1,3 @@
-import CorrelationIdManager = require('./CorrelationIdManager');
-
 class Config {
 
     // Azure adds this prefix to all environment variables
@@ -28,6 +26,8 @@ class Config {
     public correlationIdRetryIntervalMs: number;
     /** A list of domains to exclude from cross-component header injection */
     public correlationHeaderExcludedDomains: string[];
+    /** A function to send http request */
+    public sendRequest: Function;
 
     private endpointBase: string = "https://dc.services.visualstudio.com";
     private setCorrelationId: (v: string) => void;
@@ -35,7 +35,7 @@ class Config {
     
 
     constructor(instrumentationKey?: string) {
-        this.instrumentationKey = instrumentationKey || Config._getInstrumentationKey();
+        this.instrumentationKey = instrumentationKey;
         this.endpointUrl = `${this.endpointBase}/v2/track`;
         this.maxBatchSize = 250;
         this.maxBatchIntervalMs = 15000;
@@ -49,37 +49,11 @@ class Config {
             "*.core.usgovcloudapi.net"];
         
         this.setCorrelationId = (correlationId) => this.correlationId = correlationId;
-
-        this.profileQueryEndpoint = process.env[Config.ENV_profileQueryEndpoint] || this.endpointBase;
-    }
-
-    public set profileQueryEndpoint(endpoint: string) {
-        CorrelationIdManager.cancelCorrelationIdQuery(this._profileQueryEndpoint, this.instrumentationKey, this.setCorrelationId);
-        this._profileQueryEndpoint = endpoint;
-        this.correlationId = CorrelationIdManager.correlationIdPrefix; // Reset the correlationId while we wait for the new query
-        CorrelationIdManager.queryCorrelationId(
-            this._profileQueryEndpoint,
-            this.instrumentationKey,
-            this.correlationIdRetryIntervalMs,
-            this.setCorrelationId);
+        this.sendRequest = () => {};
     }
 
     public get profileQueryEndpoint() {
         return this._profileQueryEndpoint;
-    }
-
-
-    private static _getInstrumentationKey(): string {
-        // check for both the documented env variable and the azure-prefixed variable
-        var iKey = process.env[Config.ENV_iKey]
-            || process.env[Config.ENV_azurePrefix + Config.ENV_iKey]
-            || process.env[Config.legacy_ENV_iKey]
-            || process.env[Config.ENV_azurePrefix + Config.legacy_ENV_iKey];
-        if (!iKey || iKey == "") {
-            throw new Error("Instrumentation key not found, pass the key in the config to this method or set the key in the environment variable APPINSIGHTS_INSTRUMENTATIONKEY before starting the server");
-        }
-
-        return iKey;
     }
 }
 

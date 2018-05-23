@@ -1,9 +1,9 @@
-﻿import Contracts = require("../Declarations/Contracts");
+﻿import Contracts = require("../Declarations/Contracts/index");
 import Logging = require("./Logging");
 import Sender = require("./Sender");
 
 class Channel {
-    
+
     protected _lastSend: number;
     protected _timeoutHandle: any;
 
@@ -21,18 +21,6 @@ class Channel {
         this._getBatchSize = getBatchSize;
         this._getBatchIntervalMs = getBatchIntervalMs;
         this._sender = sender;
-    }
-
-    /**
-     * Enable or disable disk-backed retry caching to cache events when client is offline (enabled by default)
-     * These cached events are stored in your system or user's temporary directory and access restricted to your user when possible.
-     * @param value if true events that occured while client is offline will be cached on disk
-     * @param resendInterval The wait interval for resending cached events.
-     * @param maxBytesOnDisk The maximum size (in bytes) that the created temporary directory for cache events can grow to, before caching is disabled.
-     * @returns {Configuration} this class
-     */
-    public setUseDiskRetryCaching(value: boolean, resendInterval?: number, maxBytesOnDisk?: number) {
-        this._sender.setDiskRetryMode(value, resendInterval, maxBytesOnDisk);
     }
 
     /**
@@ -82,17 +70,13 @@ class Channel {
     public triggerSend(isNodeCrashing: boolean, callback?: (v: string) => void) {
         let bufferIsEmpty = this._buffer.length < 1;
         if (!bufferIsEmpty) {
-            // compose an array of payloads
-            var batch = this._buffer.join("\n");
-
             // invoke send
             if (isNodeCrashing) {
-                this._sender.saveOnCrash(batch);
                 if (typeof callback === "function") {
                     callback("data saved on crash");
                 }
             } else {
-                this._sender.send(new Buffer(batch), callback);
+                this._sender.send(this._buffer, callback);
             }
         }
 
